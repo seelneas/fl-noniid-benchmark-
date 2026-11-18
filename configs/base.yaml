@@ -1,0 +1,43 @@
+
+# General experiment settings
+project:
+  name: fl-noniid-benchmark
+  description: "Benchmarking federated learning under non-IID data"
+
+# Reproducibility
+seed: 42
+
+# Dataset settings
+data:
+  dataset: cifar10
+  num_clients: 20
+  batch_size: 64
+  train_val_split: 0.8
+
+# Model settings
+model:
+  name: cnn
+  num_classes: 10
+
+# Federated learning settings
+federated:
+  algorithm: fedavg
+  num_rounds: 100
+  local_epochs: 5
+  client_fraction: 1.0
+
+# Optimizer settings
+optimizer:
+  name: sgd
+  learning_rate: 0.01
+  momentum: 0.0
+  weight_decay: 0.0
+
+# Hardware settings
+device: auto
+
+# Logging
+logging:
+  save_metrics: true
+  save_checkpoints: true
+  results_dir: results

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fl-noniid-benchmark"
+version = "0.1.0"
+description = "Benchmarking federated learning under non-IID data"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy",
+    "pandas",
+    "matplotlib",
+    "pyyaml",
+    "tqdm",
+    "pytest"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
