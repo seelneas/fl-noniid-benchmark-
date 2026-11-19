@@ -1,5 +1,5 @@
 # Federated Learning datasets
-data/
+/data/
 
 # Raw experimental results
 results/raw/
