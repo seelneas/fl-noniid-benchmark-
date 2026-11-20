@@ -22,7 +22,7 @@ model:
 # Federated learning settings
 federated:
   algorithm: fedavg
-  num_rounds: 100
+  num_rounds: 10
   local_epochs: 5
   client_fraction: 1.0
 
