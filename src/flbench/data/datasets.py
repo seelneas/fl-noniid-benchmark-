@@ -137,3 +137,73 @@ def create_test_dataloader(
         batch_size=batch_size,
         shuffle=False,
     )
+
+
+def prepare_federated_data(
+    data_dir="data",
+    num_clients=20,
+    partition="dirichlet",
+    alpha=0.5,
+    batch_size=64,
+    train_val_split=0.8,
+    seed=42,
+):
+    """
+    Prepare CIFAR-10 datasets and DataLoaders for federated learning.
+
+    Returns:
+        client_loaders: Training and validation DataLoaders for each client.
+        test_loader: Global test DataLoader.
+        client_indices: Original training indices assigned to each client.
+    """
+
+    from flbench.data.partition import dirichlet_partition, iid_partition
+
+    # 1. Download and load CIFAR-10
+    train_dataset, test_dataset = download_cifar10(data_dir)
+
+    # 2. Partition the training dataset
+    labels = np.array(train_dataset.targets)
+
+    if partition == "iid":
+        client_indices = iid_partition(
+            labels,
+            num_clients=num_clients,
+            seed=seed,
+        )
+
+    elif partition == "dirichlet":
+        client_indices = dirichlet_partition(
+            labels,
+            num_clients=num_clients,
+            alpha=alpha,
+            seed=seed,
+        )
+
+    else:
+        raise ValueError(
+            "partition must be either 'iid' or 'dirichlet'"
+        )
+
+    # 3. Create client-specific training and validation datasets
+    client_datasets = create_client_datasets(
+        train_dataset,
+        client_indices,
+        train_val_split=train_val_split,
+        seed=seed,
+    )
+
+    # 4. Create client DataLoaders
+    client_loaders = create_client_dataloaders(
+        client_datasets,
+        batch_size=batch_size,
+        seed=seed,
+    )
+
+    # 5. Create the global test DataLoader
+    test_loader = create_test_dataloader(
+        test_dataset,
+        batch_size=batch_size,
+    )
+
+    return client_loaders, test_loader, client_indices
