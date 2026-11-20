@@ -7,8 +7,8 @@ from torch.utils.data import TensorDataset
 from flbench.data.datasets import (
     create_client_datasets,
     create_client_dataloaders,
+    prepare_federated_data
 )
-
 
 def test_client_data_isolation():
     # Create a small synthetic dataset
@@ -94,3 +94,34 @@ def test_client_dataloaders():
 
     assert images.shape == (8, 3, 32, 32)
     assert labels.shape == (8,)
+
+
+def test_prepare_federated_data():
+    client_loaders, test_loader, client_indices = prepare_federated_data(
+        data_dir="data",
+        num_clients=20,
+        partition="dirichlet",
+        alpha=0.5,
+        batch_size=64,
+        train_val_split=0.8,
+        seed=42,
+    )
+
+    assert len(client_loaders) == 20
+    assert len(test_loader.dataset) == 10000
+
+    total_samples = sum(
+        len(loaders["train"].dataset) + len(loaders["val"].dataset)
+        for loaders in client_loaders.values()
+    )
+
+    assert total_samples == 50000
+
+    all_indices = [
+        int(index)
+        for indices in client_indices.values()
+        for index in indices
+    ]
+
+    assert len(all_indices) == len(set(all_indices))
+    assert len(all_indices) == 50000
