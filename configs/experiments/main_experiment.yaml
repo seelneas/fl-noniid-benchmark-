@@ -1,0 +1,65 @@
+experiment:
+  name: main_federated_benchmark
+  description: "Comparing federated learning algorithms under different levels of client heterogeneity"
+
+dataset:
+  name: cifar10
+  num_clients: 20
+  batch_size: 64
+  train_val_split: 0.8
+
+model:
+  name: cnn
+  num_classes: 10
+
+training:
+  num_rounds: 100
+  local_epochs: 5
+  client_fraction: 1.0
+
+optimizer:
+  name: sgd
+  learning_rate: 0.01
+  momentum: 0.0
+  weight_decay: 0.0
+
+algorithms:
+  fedavg:
+    enabled: true
+
+  fedprox:
+    enabled: true
+    mu: 0.01
+
+  scaffold:
+    enabled: true
+
+data_distributions:
+  - name: iid
+    partition: iid
+
+  - name: dirichlet_alpha_10
+    partition: dirichlet
+    alpha: 10.0
+
+  - name: dirichlet_alpha_05
+    partition: dirichlet
+    alpha: 0.5
+
+  - name: dirichlet_alpha_01
+    partition: dirichlet
+    alpha: 0.1
+
+seeds:
+  - 0
+  - 1
+  - 2
+
+evaluation:
+  monitor: validation
+  final_test_evaluation: true
+
+output:
+  results_dir: results
+  save_checkpoints: true
+  save_metrics: true
