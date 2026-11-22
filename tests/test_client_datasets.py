@@ -4,7 +4,7 @@ import torch
 
 from torch.utils.data import TensorDataset
 
-from flbench.data.datasets import (
+from src.flbench.data.datasets import (
     create_client_datasets,
     create_client_dataloaders,
     prepare_federated_data
@@ -97,7 +97,7 @@ def test_client_dataloaders():
 
 
 def test_prepare_federated_data():
-    client_loaders, test_loader, client_indices = prepare_federated_data(
+    client_loaders, test_loader, client_indices, validation_loader = prepare_federated_data(
         data_dir="data",
         num_clients=20,
         partition="dirichlet",
@@ -125,3 +125,34 @@ def test_prepare_federated_data():
 
     assert len(all_indices) == len(set(all_indices))
     assert len(all_indices) == 50000
+
+def test_global_validation_dataloader():
+    from torch.utils.data import TensorDataset
+    from flbench.data.datasets import (
+        create_global_validation_dataloader,
+    )
+
+    client_datasets = {}
+
+    for client_id in range(2):
+        images = torch.randn(10, 3, 32, 32)
+        labels = torch.randint(0, 10, (10,))
+
+        dataset = TensorDataset(images, labels)
+
+        client_datasets[client_id] = {
+            "train": dataset,
+            "val": dataset,
+        }
+
+    validation_loader = create_global_validation_dataloader(
+        client_datasets,
+        batch_size=4,
+    )
+
+    total_samples = sum(
+        len(images)
+        for images, labels in validation_loader
+    )
+
+    assert total_samples == 20

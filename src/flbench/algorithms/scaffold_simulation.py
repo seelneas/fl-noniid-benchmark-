@@ -8,7 +8,7 @@ from flbench.fl.client import evaluate_model
 def run_scaffold_simulation(
     server,
     client_loaders,
-    test_loader,
+    validation_loader,
     num_rounds=10,
     local_epochs=5,
     learning_rate=0.01,
@@ -51,6 +51,9 @@ def run_scaffold_simulation(
         torch.zeros_like(parameter, device=device)
         for parameter in server.global_model.parameters()
     ]
+    best_validation_accuracy = -1.0
+    best_model_state = None
+    best_round = None
 
     for round_number in range(1, num_rounds + 1):
         print(f"\nSCAFFOLD Round {round_number}/{num_rounds}")
@@ -135,11 +138,18 @@ def run_scaffold_simulation(
                 )
 
         # Evaluate the updated global model.
-        test_metrics = evaluate_model(
+        validation_metrics = evaluate_model(
             server.global_model,
-            test_loader,
+            validation_loader,
             device,
         )
+
+        current_accuracy = validation_metrics["accuracy"]
+
+        if current_accuracy > best_validation_accuracy:
+            best_validation_accuracy = current_accuracy
+            best_model_state = copy.deepcopy(server.global_model.state_dict())
+            best_round = round_number
 
         total_samples = sum(client_sizes)
 
@@ -150,8 +160,8 @@ def run_scaffold_simulation(
 
         round_metrics = {
             "train_loss": average_train_loss,
-            "test_loss": test_metrics["loss"],
-            "test_accuracy": test_metrics["accuracy"],
+            "validation_loss": validation_metrics["loss"],
+            "validation_accuracy": validation_metrics["accuracy"],
             "num_clients": len(client_ids),
             "total_client_samples": total_samples,
         }
@@ -160,8 +170,13 @@ def run_scaffold_simulation(
 
         print(
             f"Train Loss: {average_train_loss:.4f} | "
-            f"Test Loss: {test_metrics['loss']:.4f} | "
-            f"Test Accuracy: {test_metrics['accuracy']:.4f}"
+            f"Validation Loss: {validation_metrics['loss']:.4f} | "
+            f"Validation Accuracy: {validation_metrics['accuracy']:.4f}"
         )
 
-    return server.round_metrics
+    return {
+    "history": server.round_metrics,
+    "best_model_state": best_model_state,
+    "best_round": best_round,
+    "best_validation_accuracy": best_validation_accuracy,
+}       

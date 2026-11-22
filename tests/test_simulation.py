@@ -40,28 +40,33 @@ def test_federated_simulation_runs():
         },
     }
 
-    test_loader = create_dummy_loader(16)
+    validation_loader = create_dummy_loader(16)
 
-    history = run_federated_simulation(
+    results = run_federated_simulation(
         server=server,
         client_loaders=client_loaders,
-        test_loader=test_loader,
+        validation_loader=validation_loader,
         num_rounds=2,
         local_epochs=1,
         learning_rate=0.01,
     )
 
-    assert len(history) == 2
+    # Check the list of round metrics inside "history"
+    assert len(results["history"]) == 2
 
-    assert history[0]["round"] == 1
-    assert history[1]["round"] == 2
+    assert results["history"][0]["round"] == 1
+    assert results["history"][1]["round"] == 2
 
-    assert history[0]["num_clients"] == 2
-    assert history[0]["total_client_samples"] == 40
+    assert results["history"][0]["num_clients"] == 2
+    assert results["history"][0]["total_client_samples"] == 40
 
-    assert 0 <= history[0]["test_accuracy"] <= 1
-    assert history[0]["test_loss"] >= 0
+    assert 0 <= results["history"][0]["validation_accuracy"] <= 1
+    assert results["history"][0]["validation_loss"] >= 0
 
+    # Check the best model tracking metadata
+    assert results["best_model_state"] is not None
+    assert results["best_round"] in [1, 2]
+    assert 0 <= results["best_validation_accuracy"] <= 1
 
 def test_simulation_invalid_rounds():
     server = FederatedServer(
@@ -76,7 +81,7 @@ def test_simulation_invalid_rounds():
             run_federated_simulation(
                 server=server,
                 client_loaders={0: {"train": loader}},
-                test_loader=loader,
+                validation_loader=loader,
                 num_rounds=0,
             )
         except ValueError:
@@ -99,7 +104,7 @@ def test_simulation_rejects_empty_clients():
         run_federated_simulation(
             server=server,
             client_loaders={},
-            test_loader=loader,
+            validation_loader=loader,
         )
     except ValueError:
         pass

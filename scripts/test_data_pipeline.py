@@ -2,7 +2,7 @@
 from flbench.data.datasets import prepare_federated_data
 
 def main():
-    client_loaders, test_loader, client_indices = prepare_federated_data(
+    client_loaders, test_loader, client_indices, validation_loader = prepare_federated_data(
         data_dir="data",
         num_clients=20,
         partition="dirichlet",
@@ -16,6 +16,8 @@ def main():
     print("=" * 45)
 
     print(f"Number of clients: {len(client_loaders)}")
+    print(f"Validation samples: {len(validation_loader.dataset)}")
+    print(f"Test samples: {len(test_loader.dataset)}")
 
     total_train = 0
     total_val = 0

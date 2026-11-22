@@ -50,21 +50,24 @@ def simulation_setup():
 def test_scaffold_simulation_runs(simulation_setup):
     server, client_loaders, test_loader = simulation_setup
 
-    metrics = run_scaffold_simulation(
+    results = run_scaffold_simulation(
         server=server,
         client_loaders=client_loaders,
-        test_loader=test_loader,
+        validation_loader=test_loader,
         num_rounds=2,
         local_epochs=1,
         learning_rate=0.01,
     )
 
-    assert len(metrics) == 2
-    assert metrics[0]["round"] == 1
-    assert metrics[1]["round"] == 2
+    assert len(results['history']) == 2
+    assert results['history'][0]["round"] == 1
+    assert results['history'][1]["round"] == 2
 
-    assert "train_loss" in metrics[0]
-    assert "test_accuracy" in metrics[0]
+    assert "validation_loss" in results['history'][0]
+    assert "validation_accuracy" in results['history'][0]
+    assert results["best_model_state"] is not None
+    assert results["best_round"] in [1, 2]
+    assert 0.0 <= results["best_validation_accuracy"] <= 1.0
 
 
 def test_scaffold_simulation_rejects_invalid_rounds(simulation_setup):

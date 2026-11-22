@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from torch.utils.data import DataLoader, Subset, random_split
+from torch.utils.data import DataLoader, Subset, random_split, ConcatDataset
 from torchvision import datasets, transforms
 
 
@@ -200,10 +200,36 @@ def prepare_federated_data(
         seed=seed,
     )
 
+
     # 5. Create the global test DataLoader
     test_loader = create_test_dataloader(
         test_dataset,
         batch_size=batch_size,
     )
 
-    return client_loaders, test_loader, client_indices
+    validation_loader = create_global_validation_dataloader(
+    client_datasets,
+    batch_size=batch_size,
+)
+
+    return client_loaders, test_loader, client_indices, validation_loader
+
+
+def create_global_validation_dataloader(
+    client_datasets,
+    batch_size=64,
+):
+    validation_datasets = [
+        datasets_dict["val"]
+        for datasets_dict in client_datasets.values()
+    ]
+
+    global_validation_dataset = ConcatDataset(
+        validation_datasets
+    )
+
+    return DataLoader(
+        global_validation_dataset,
+        batch_size=batch_size,
+        shuffle=False,
+    )

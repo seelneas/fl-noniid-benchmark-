@@ -1,11 +1,13 @@
 
+import copy
+
 from flbench.fl.client import train_local_model
 
 
 def run_federated_simulation(
     server,
     client_loaders,
-    test_loader,
+    validation_loader,
     num_rounds=10,
     local_epochs=5,
     learning_rate=0.01,
@@ -19,7 +21,7 @@ def run_federated_simulation(
         server: Initialized FederatedServer.
         client_loaders: Dictionary containing each client's
                         training and validation DataLoaders.
-        test_loader: Global test DataLoader.
+        validation_loader: Global test DataLoader.
         num_rounds: Number of communication rounds.
         local_epochs: Number of local epochs per round.
         learning_rate: SGD learning rate.
@@ -46,6 +48,9 @@ def run_federated_simulation(
             raise ValueError(
                 f"Client {client_id} is missing a training DataLoader"
             )
+    best_validation_accuracy = -1.0
+    best_model_state = None
+    best_round = None
 
     for round_number in range(1, num_rounds + 1):
 
@@ -85,9 +90,18 @@ def run_federated_simulation(
         )
 
         # Evaluate the updated global model.
-        test_metrics = server.evaluate_global_model(test_loader)
+        validation_metrics = server.evaluate_global_model(validation_loader)
 
-        # Calculate sample-weighted training loss.
+        current_accuracy = validation_metrics["accuracy"]
+
+        if current_accuracy > best_validation_accuracy:
+            best_validation_accuracy = current_accuracy
+            best_model_state = copy.deepcopy(
+                server.global_model.state_dict()
+            )
+            best_round = round_number
+
+                # Calculate sample-weighted training loss.
         total_samples = sum(client_sizes)
 
         average_train_loss = sum(
@@ -101,16 +115,23 @@ def run_federated_simulation(
         # Record communication-round metrics.
         round_metrics = {
             "train_loss": average_train_loss,
-            "test_loss": test_metrics["loss"],
-            "test_accuracy": test_metrics["accuracy"],
+            "validation_loss": validation_metrics["loss"],
+            "validation_accuracy": validation_metrics["accuracy"],
             "num_clients": len(client_ids),
             "total_client_samples": total_samples,
-        }
+}
 
         server.record_round(round_number, round_metrics)
 
-        print(f"Training Loss: {average_train_loss:.4f}")
-        print(f"Test Loss:     {test_metrics['loss']:.4f}")
-        print(f"Test Accuracy: {test_metrics['accuracy']:.4f}")
+        print(
+    f"Train Loss: {average_train_loss:.4f} | "
+    f"Validation Loss: {validation_metrics['loss']:.4f} | "
+    f"Validation Accuracy: {validation_metrics['accuracy']:.4f}"
+)
 
-    return server.round_metrics
+    return {
+    "history": server.round_metrics,
+    "best_model_state": best_model_state,
+    "best_round": best_round,
+    "best_validation_accuracy": best_validation_accuracy,
+}

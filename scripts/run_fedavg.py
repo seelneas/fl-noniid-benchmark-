@@ -27,7 +27,7 @@ def main():
     # 4. Prepare federated data
     print("\nPreparing federated datasets...")
 
-    client_loaders, test_loader, client_indices = (
+    client_loaders, test_loader, client_indices, validation_loader = (
         prepare_federated_data(
             data_dir="data",
             num_clients=config["data"]["num_clients"],
@@ -58,7 +58,7 @@ def main():
     history = run_federated_simulation(
         server=server,
         client_loaders=client_loaders,
-        test_loader=test_loader,
+        validation_loader=validation_loader,
         num_rounds=config["federated"]["num_rounds"],
         local_epochs=config["federated"]["local_epochs"],
         learning_rate=config["optimizer"]["learning_rate"],
