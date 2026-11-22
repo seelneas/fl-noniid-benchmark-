@@ -1,0 +1,49 @@
+
+experiment:
+  name: federated_benchmark_pilot
+  description: "Small pilot run to estimate experiment runtime and verify result saving"
+
+dataset:
+  name: cifar10
+  num_clients: 20
+  batch_size: 64
+  train_val_split: 0.8
+
+model:
+  name: cnn
+  num_classes: 10
+
+training:
+  num_rounds: 5
+  local_epochs: 5
+  client_fraction: 1.0
+
+optimizer:
+  name: sgd
+  learning_rate: 0.01
+  momentum: 0.0
+  weight_decay: 0.0
+
+algorithms:
+  fedavg:
+    enabled: true
+  fedprox:
+    enabled: true
+    mu: 0.01
+  scaffold:
+    enabled: true
+
+data_distributions:
+  - name: iid
+    partition: iid
+
+seeds: [99]
+
+evaluation:
+  monitor: validation
+  final_test_evaluation: true
+
+output:
+  results_dir: results/pilot
+  save_checkpoints: true
+  save_metrics: true
