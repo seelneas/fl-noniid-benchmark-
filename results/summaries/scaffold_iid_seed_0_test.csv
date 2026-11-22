@@ -1,0 +1,2 @@
+algorithm,distribution,seed,best_round,best_validation_accuracy,test_loss,test_accuracy
+scaffold,iid,0,2,0.1483,2.29659345741272,0.1591

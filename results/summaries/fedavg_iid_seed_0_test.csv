@@ -1,0 +1,2 @@
+algorithm,distribution,seed,best_round,best_validation_accuracy,test_loss,test_accuracy
+fedavg,iid,0,2,0.1467,2.2965807868957517,0.1572

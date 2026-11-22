@@ -36,15 +36,15 @@ class FederatedServer:
 
         return self.global_model
 
-    def evaluate_global_model(self, test_loader):
+    def evaluate_global_model(self, data_loader):
         """
-        Evaluate the current global model.
+        Evaluate the current global model on a supplied dataset.
         """
         return evaluate_model(
             self.global_model,
-            test_loader,
+            data_loader,
             self.device,
-        )
+    )
 
     def record_round(self, round_number, metrics):
         """

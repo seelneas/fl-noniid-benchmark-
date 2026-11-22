@@ -1,10 +1,11 @@
 from flbench.algorithms.fedprox import train_fedprox_model
+import copy
 
 
 def run_fedprox_simulation(
     server,
     client_loaders,
-    test_loader,
+    validation_loader,
     num_rounds=10,
     local_epochs=5,
     learning_rate=0.01,
@@ -33,6 +34,9 @@ def run_fedprox_simulation(
             )
 
     for round_number in range(1, num_rounds + 1):
+        best_validation_accuracy = -1.0
+        best_model_state = None
+        best_round = None
         print(f"\nFedProx Round {round_number}/{num_rounds}")
 
         client_models = []
@@ -59,7 +63,13 @@ def run_fedprox_simulation(
 
         server.aggregate_updates(client_models, client_sizes)
 
-        test_metrics = server.evaluate_global_model(test_loader)
+        validation_metrics = server.evaluate_global_model(validation_loader)
+        current_accuracy = validation_metrics["accuracy"]
+
+        if current_accuracy > best_validation_accuracy:
+            best_validation_accuracy = current_accuracy
+            best_model_state = copy.deepcopy(server.global_model.state_dict())
+            best_round = round_number
 
         total_samples = sum(client_sizes)
 
@@ -70,8 +80,8 @@ def run_fedprox_simulation(
 
         round_metrics = {
             "train_loss": average_train_loss,
-            "test_loss": test_metrics["loss"],
-            "test_accuracy": test_metrics["accuracy"],
+            "validation_loss": validation_metrics["loss"],
+            "validation_accuracy": validation_metrics["accuracy"],
             "num_clients": len(client_ids),
             "total_client_samples": total_samples,
             "mu": mu,
@@ -81,8 +91,13 @@ def run_fedprox_simulation(
 
         print(
             f"Train Loss: {average_train_loss:.4f} | "
-            f"Test Loss: {test_metrics['loss']:.4f} | "
-            f"Test Accuracy: {test_metrics['accuracy']:.4f}"
+            f"Validation Loss: {validation_metrics['loss']:.4f} | "
+            f"Validation Accuracy: {validation_metrics['accuracy']:.4f}"
         )
 
-    return server.round_metrics
+    return {
+    "history": server.round_metrics,
+    "best_model_state": best_model_state,
+    "best_round": best_round,
+    "best_validation_accuracy": best_validation_accuracy,
+}
